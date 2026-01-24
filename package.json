@@ -11,7 +11,7 @@
     "adm-zip": "^0.5.10",
     "axios": "^1.6.0",
     "js-confuser": "^1.1.0",
-    "@whiskeysockets/baileys": "github: FezChat/SocketsBaileys.git",
+    "@whiskeysockets/baileys": "git+https://github.com/FezChat/SocketsBaileys.git",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.0",
     "@google/generative-ai": "^0.1.3",
