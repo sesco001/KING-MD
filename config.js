@@ -1,27 +1,29 @@
 require('dotenv').config();
 const path = require('path');
-// Import owner from set.js (Assumes set.js is in the main folder, one level up)
+const chalk = require('chalk');
+
+// Import owner from set.js (Goes up one folder to find it)
 let set;
 try {
     set = require('../set');
 } catch (e) {
-    // Fallback if set.js is inside the Database folder or not found
-    try { set = require('./set'); } catch (e) { set = { owner: [] }; }
+    set = { owner: [] }; 
 }
 
 // ================= DEFAULT BOT SETTINGS =================
 const defaultSettings = {
   antilink: 'on',
   antilinkall: 'off',
+  autobioText: 'KING M 𝚁𝙴𝙿𝚁𝙴𝚂𝙴𝙽𝚃𝚂 SHARP📌',
   autobio: 'on',
   antidelete: 'on',
   antitag: 'on',
   antibot: 'off',
   anticall: 'off',
-antistatusmention: 'off',
+  antistatus: 'off', 
   antiforeign: 'off',
   badword: 'off',
-  gptdm: 'off',
+  chatbot: 'off',
   welcomegoodbye: 'off',
   autoread: 'off',
   mode: 'public',
@@ -30,8 +32,13 @@ antistatusmention: 'off',
   autoview: 'on',
   wapresence: 'online',
   antiedit: 'private',
-    menuTitle: "KING MD VIP",
-    antigroupmention: 'off'
+  antisticker: 'off',
+  menuTitle: "KING MD VIP",
+  antigroupmention: 'off',
+  autolike_emojis: 'default',
+  antimention: 'off',
+  antiforward: 'off',
+  autoreact: 'off'
 };
 
 // ================= MODE DETECTION =================
@@ -45,7 +52,7 @@ if (usePostgres) {
   // ==========================================================
   // 🟦 OPTION A: POSTGRESQL (Heroku / Render)
   // ==========================================================
-  console.log("📡 Mode: Cloud (PostgreSQL detected)");
+  console.log(chalk.cyan('[KING-M] ') + chalk.white('Database Mode: PostgreSQL (Cloud)'));
   const { Pool } = require('pg');
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -62,11 +69,11 @@ if (usePostgres) {
       for (const [key, value] of Object.entries(defaultSettings)) {
         await client.query(`INSERT INTO bot_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING;`, [key, value]);
       }
-      console.log("✅ PostgreSQL initialized.");
-    } catch (err) { console.error("❌ PG Init Error:", err); } finally { client.release(); }
+      console.log(chalk.green('[KING-M] ') + chalk.white('PostgreSQL initialized'));
+    } catch (err) { console.log(chalk.red('[ERROR] ') + chalk.white('PG Init: ' + err)); } finally { client.release(); }
   };
 
-  // ... (Postgres functions remain the same) ...
+  // ... (Postgres functions) ...
   getSettings = async function() { const client = await pool.connect(); try { const res = await client.query(`SELECT key, value FROM bot_settings`); const settings = {}; res.rows.forEach(row => settings[row.key] = row.value); return { ...defaultSettings, ...settings }; } catch (err) { return defaultSettings; } finally { client.release(); } };
   updateSetting = async function(key, value) { const client = await pool.connect(); try { await client.query(`INSERT INTO bot_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, [key, value]); return true; } catch (err) { return false; } finally { client.release(); } };
   addSudoOwner = async function(number) { const client = await pool.connect(); try { await client.query(`INSERT INTO sudo_owners (number) VALUES ($1) ON CONFLICT DO NOTHING`, [number]); return true; } catch (err) { return false; } finally { client.release(); } };
@@ -81,7 +88,7 @@ if (usePostgres) {
   // ==========================================================
   // 🟩 OPTION B: SQLITE3 (Panel / VPS / Local)
   // ==========================================================
-  console.log("📡 Mode: Panel (Switching to SQLite)");
+  console.log(chalk.cyan('[KING-M] ') + chalk.white('Database Mode: SQLite (Local)'));
   const sqlite3 = require('sqlite3').verbose();
   const dbPath = path.resolve(__dirname, 'database.db');
   const db = new sqlite3.Database(dbPath);
@@ -108,21 +115,20 @@ if (usePostgres) {
       }
 
       // 2. 👑 AUTO-SYNC OWNER FROM SET.JS 👑
-      // This loops through the owner list in set.js and adds them to the database
       if (set.owner && Array.isArray(set.owner)) {
         for (const num of set.owner) {
           if (num) {
             await query(`INSERT OR IGNORE INTO sudo_owners (number) VALUES (?)`, [num.trim()]);
           }
         }
-        console.log(`✅ Auto-synced ${set.owner.length} owner(s) from set.js to SQLite.`);
+        console.log(chalk.green('[KING-M] ') + chalk.white(`Auto-synced ${set.owner.length} owner(s) from set.js`));
       }
 
-      console.log("✅ SQLite initialized.");
-    } catch (err) { console.error("❌ SQLite Init Error:", err); }
+      console.log(chalk.green('[KING-M] ') + chalk.white('SQLite initialized'));
+    } catch (err) { console.log(chalk.red('[ERROR] ') + chalk.white('SQLite Init: ' + err)); }
   };
 
-  // ... (SQLite functions remain the same) ...
+  // ... (SQLite functions) ...
   getSettings = async function() { try { const rows = await query(`SELECT key, value FROM bot_settings`); const settings = {}; rows.forEach(row => settings[row.key] = row.value); return { ...defaultSettings, ...settings }; } catch (err) { return defaultSettings; } };
   updateSetting = async function(key, value) { try { await query(`INSERT INTO bot_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`, [key, value]); return true; } catch (err) { return false; } };
   addSudoOwner = async function(number) { try { await query(`INSERT OR IGNORE INTO sudo_owners (number) VALUES (?)`, [number]); return true; } catch (err) { return false; } };
