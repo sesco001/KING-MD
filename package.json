@@ -12,7 +12,7 @@
     "axios": "^1.6.0",
     "qrcode": "^1.5.4",
     "js-confuser": "^1.1.0",
-    "@whiskeysockets/baileys": "npm:@makamesco-md/baileys@1.0.1",
+    "@whiskeysockets/baileys": "7.0.0-rc13",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.0",
     "@google/generative-ai": "^0.1.3",
